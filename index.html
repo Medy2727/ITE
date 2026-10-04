@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IT Support & Troubleshooting Interactive Quiz</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --border: #e2e8f0;
+      --correct: #16a34a;
+      --incorrect: #dc2626;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .quiz-container {
+      width: 100%;
+      max-width: 800px;
+      background: var(--card-bg);
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--border);
+      position: relative;
+    }
+
+    .header {
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .header h1 {
+      font-size: 1.5rem;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background-color: #e2e8f0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 12px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background-color: var(--primary);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .question-card {
+      display: none;
+    }
+
+    .question-card.active {
+      display: block;
+    }
+
+    .question-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      line-height: 1.4;
+    }
+
+    .options-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .option-btn {
+      padding: 14px 18px;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      cursor: pointer;
+      text-align: left;
+      font-size: 1rem;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .option-btn:hover {
+      border-color: var(--primary);
+      background-color: #f0f7ff;
+    }
+
+    .option-btn.selected {
+      border-color: var(--primary);
+      background-color: #e0edff;
+      font-weight: 600;
+    }
+
+    /* Matching question styles */
+    .matching-group {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .matching-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 12px;
+      background: #f1f5f9;
+      border-radius: 8px;
+    }
+
+    .matching-label {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .matching-select {
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: white;
+      font-size: 0.95rem;
+      width: 100%;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border-radius: 6px;
+      border: none;
+      background-color: var(--primary);
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .btn:hover {
+      background-color: var(--primary-dark);
+    }
+
+    .btn-secondary {
+      background-color: #64748b;
+    }
+
+    .btn-secondary:hover {
+      background-color: #475569;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Results Screen */
+    .results-screen {
+      display: none;
+      text-align: center;
+    }
+
+    .score-circle {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: #e0edff;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: 700;
+      margin: 20px auto;
+      border: 4px solid var(--primary);
+    }
+
+    .review-item {
+      text-align: left;
+      padding: 16px;
+      margin-bottom: 12px;
+      border-radius: 8px;
+      border-left: 5px solid #ccc;
+      background: #f8fafc;
+    }
+
+    .review-item.correct {
+      border-left-color: var(--correct);
+      background: #f0fdf4;
+    }
+
+    .review-item.incorrect {
+      border-left-color: var(--incorrect);
+      background: #fef2f2;
+    }
+
+    .review-q {
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .review-ans {
+      font-size: 0.9rem;
+    }
+
+    @media (min-width: 640px) {
+      .matching-row {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .matching-label {
+        width: 45%;
+      }
+      .matching-select {
+        width: 50%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="quiz-container">
+  <div class="header" id="quizHeader">
+    <h1>IT Support & Troubleshooting Quiz</h1>
+    <div id="questionCounter">Otázka 1 z 20</div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+  </div>
+
+  <div id="questionsContainer"></div>
+
+  <div class="controls" id="quizControls">
+    <button class="btn btn-secondary" id="prevBtn" onclick="navigate(-1)">Späť</button>
+    <button class="btn" id="nextBtn" onclick="navigate(1)">Ďalej</button>
+  </div>
+
+  <div class="results-screen" id="resultsScreen">
+    <h2>Výsledky testu</h2>
+    <div class="score-circle" id="scoreCircle">0/20</div>
+    <p id="scoreMessage" style="margin-bottom: 20px; font-size: 1.1rem;"></p>
+    
+    <button class="btn" onclick="restartQuiz()" style="margin-bottom: 30px;">Skúsiť znova</button>
+    
+    <h3 style="text-align: left; margin-bottom: 16px;">Prehľad odpovedí:</h3>
+    <div id="reviewList"></div>
+  </div>
+</div>
+
+<script>
+const quizData = [
+  {
+    type: "matching",
+    question: "1. Arrange the steps of conducting a remote access session in the correct order.",
+    items: [
+      { key: "Step 1", correct: "Installation and setup" },
+      { key: "Step 2", correct: "Establish a connection" },
+      { key: "Step 3", correct: "Perform the task" },
+      { key: "Step 4", correct: "Close the session" }
+    ],
+    options: ["Installation and setup", "Establish a connection", "Perform the task", "Close the session"]
+  },
+  {
+    type: "mc",
+    question: "2. If a user is unable to collaborate in real-time using a tool like Microsoft Teams, which step should be prioritized during troubleshooting?",
+    options: [
+      "Reinstall the application and clear the user's browser cache.",
+      "Check if the user's device is running the latest version of the operating system.",
+      "Verify that the user has the correct permissions and access to the shared resources.",
+      "Test the user's device with another collaboration tool that is already installed to isolate the issue."
+    ],
+    correct: 2
+  },
+  {
+    type: "mc",
+    question: "3. Which statement describes one way generative AI tools, like ChatGPT, can assist in troubleshooting?",
+    options: [
+      "They physically repair devices remotely.",
+      "They enforce company policies and privacy laws.",
+      "They answer queries and suggest potential causes for technical issues.",
+      "They identify server anomalies that may lead to downtime if not otherwise identified."
+    ],
+    correct: 2
+  },
+  {
+    type: "mc",
+    question: "4. After making a change during troubleshooting, what is the first thing the IT support technician should do?",
+    options: [
+      "Observe whether the issue is resolved, such as checking if the laptop has a stable connection to a Wi-Fi.",
+      "Immediately proceed to the next possible solution to see if this is a better solution.",
+      "Restart the troubleshooting process from the beginning to handle any new problems introduced by the first solution.",
+      "Assume the issue is resolved and close the case."
+    ],
+    correct: 0
+  },
+  {
+    type: "matching",
+    question: "5. Match each feature of remote access software with the correct description.",
+    items: [
+      { key: "Security Measures", correct: "Ensures safe connections through encryption and user permissions." },
+      { key: "File Transfer", correct: "Allows moving files between devices for updates or problem resolution." },
+      { key: "Chat Functionality", correct: "Enables communication with the user during the troubleshooting process." },
+      { key: "Screen Sharing", correct: "Allows a technician to view a user's screen, in real time, for troubleshooting." }
+    ],
+    options: [
+      "Ensures safe connections through encryption and user permissions.",
+      "Allows moving files between devices for updates or problem resolution.",
+      "Enables communication with the user during the troubleshooting process.",
+      "Allows a technician to view a user's screen, in real time, for troubleshooting."
+    ]
+  },
+  {
+    type: "matching",
+    question: "6. Match the remote access tool to the primary features or uses.",
+    items: [
+      { key: "TeamViewer", correct: "Offers cross-platform support with file transfer, chat, and session recording." },
+      { key: "Cisco WebEx", correct: "Combines video conferencing with screen sharing for collaborative support." },
+      { key: "VNC (RealVNC)", correct: "Provides desktop sharing capabilities across platforms, originally open-source." },
+      { key: "Windows Remote Assistance", correct: "Suited for quick support sessions with built-in Windows functionality." },
+      { key: "macOS Remote Desktop", correct: "Manages multiple Apple devices efficiently." },
+      { key: "Microsoft Remote Desktop", correct: "Works well in professional environments, integrating seamlessly with Windows systems." }
+    ],
+    options: [
+      "Offers cross-platform support with file transfer, chat, and session recording.",
+      "Combines video conferencing with screen sharing for collaborative support.",
+      "Provides desktop sharing capabilities across platforms, originally open-source.",
+      "Suited for quick support sessions with built-in Windows functionality.",
+      "Manages multiple Apple devices efficiently.",
+      "Works well in professional environments, integrating seamlessly with Windows systems."
+    ]
+  },
+  {
+    type: "mc",
+    question: "7. When speaking with a customer during troubleshooting, which practice demonstrates proper conversational etiquette?",
+    options: [
+      "Using technical terms to explain the issue thoroughly.",
+      "Asking direct questions to gather relevant information.",
+      "Suggesting that something the customer did caused the problem.",
+      "Over simplifying the explanation to ensure that the customer is understanding."
+    ],
+    correct: 1
+  },
+  {
+    type: "mc",
+    question: "8. What is an important step to take before starting a remote access session?",
+    options: [
+      "Focus on the technician's device compatibility, as the user's device will automatically adjust once the session has started.",
+      "Ensure the software works on both devices and communicate clear expectations about the session.",
+      "Assume the user knows what to expect and begin troubleshooting immediately.",
+      "The technician should avoid explaining steps and actions to save time during the session."
+    ],
+    correct: 1
+  },
+  {
+    type: "mc",
+    question: "9. Which application provides cross-platform support for Windows, macOS, and mobile devices, with features like file transfer, chat, and session recording?",
+    options: [
+      "TeamViewer",
+      "Cisco WebEx",
+      "Remote Desktop macOS",
+      "Microsoft Remote Desktop"
+    ],
+    correct: 0
+  },
+  {
+    type: "mc",
+    question: "10. What is a key benefit of participating in technical forums?",
+    options: [
+      "They guarantee professional IT support for free.",
+      "They prioritize official manufacturer responses over user input.",
+      "They provide real-world troubleshooting experiences and unique solutions.",
+      "They eliminate the need for other troubleshooting resources, saving time and effort."
+    ],
+    correct: 2
+  },
+  {
+    type: "mc",
+    question: "11. When troubleshooting issues with a computer system, which process is the most critical precaution to take before beginning repairs?",
+    options: [
+      "Document the serial numbers of the computer components.",
+      "Update the operating system and drivers.",
+      "Back-up the customer's data.",
+      "Test the hardware thoroughly."
+    ],
+    correct: 2
+  },
+  {
+    type: "matching",
+    question: "12. Match the aspect of documenting research to the benefit or key point.",
+    items: [
+      { key: "Using AI tools", correct: "Provides quick and detailed insights by querying and analyzing data." },
+      { key: "Leveraging search engines and forums", correct: "Combines existing solutions for faster and more accurate problem-solving." },
+      { key: "Considering ethical and privacy implications", correct: "Promotes responsible use of AI while safeguarding sensitive information." },
+      { key: "Updating internal documentation", correct: "Ensures team-wide access to new solutions for improved efficiency." }
+    ],
+    options: [
+      "Provides quick and detailed insights by querying and analyzing data.",
+      "Combines existing solutions for faster and more accurate problem-solving.",
+      "Promotes responsible use of AI while safeguarding sensitive information.",
+      "Ensures team-wide access to new solutions for improved efficiency."
+    ]
+  },
+  {
+    type: "mc",
+    question: "13. What is a common cause of email synchronization problems?",
+    options: [
+      "forgotten passwords",
+      "incorrect two-factor authentication (2FA) settings",
+      "poor internet connectivity or incorrect email settings",
+      "outdated collaboration tools and forgotten passwords"
+    ],
+    correct: 2
+  },
+  {
+    type: "mc",
+    question: "14. What information should be included in the documentation after successfully resolving an issue?",
+    options: [
+      "the original issue, the steps taken to resolve it, and the final solution",
+      "only the final solution since it is the most important detail",
+      "a list of all tools used during the troubleshooting process",
+      "all personal notes related to the troubleshooting process and the final solution"
+    ],
+    correct: 0
+  },
+  {
+    type: "matching",
+    question: "15. Match each component of a troubleshooting plan with the correct description.",
+    items: [
+      { key: "Specific actions", correct: "Detailed measures to resolve the identified problem based on probable cause." },
+      { key: "Order of steps", correct: "A sequence that outlines the steps to be followed logically and efficiently." },
+      { key: "Necessary tools or resources", correct: "Items or software required to carry out the troubleshooting process effectively." },
+      { key: "Contingency plans", correct: "Backup plans in case the initial solution does not work as expected." }
+    ],
+    options: [
+      "Detailed measures to resolve the identified problem based on probable cause.",
+      "A sequence that outlines the steps to be followed logically and efficiently.",
+      "Items or software required to carry out the troubleshooting process effectively.",
+      "Backup plans in case the initial solution does not work as expected."
+    ]
+  },
+  {
+    type: "mc",
+    question: "16. Which way can an IT support technician improve the search engine queries to find more relevant results?",
+    options: [
+      "Use only general terms like \"Wi-Fi not working\".",
+      "Search only for solutions on social media platforms.",
+      "Include error codes or specific phrases related to the issue.",
+      "Avoid using generative AI responses embedded in search engines."
+    ],
+    correct: 2
+  },
+  {
+    type: "mc",
+    question: "17. While troubleshooting, what is the best way to determine the exact cause of a problem?",
+    options: [
+      "Test multiple probable causes simultaneously to save time.",
+      "Start with the most complex theories to rule them out first, then proceed to more simple ones.",
+      "Skip testing and proceed directly to implementing a solution.",
+      "Test each theory of probable cause one at a time, starting with the quickest and easiest."
+    ],
+    correct: 3
+  },
+  {
+    type: "matching",
+    question: "18. Match each step of the troubleshooting process with the correct description.",
+    items: [
+      { key: "Document changes", correct: "Record all steps taken to resolve the issue for future reference." },
+      { key: "Define the problem", correct: "Clearly identify and articulate what the issue is." },
+      { key: "Devise a plan / Gather detailed info", correct: "Develop a strategy to address the identified issue based on the probable cause." }
+    ],
+    options: [
+      "Record all steps taken to resolve the issue for future reference.",
+      "Clearly identify and articulate what the issue is.",
+      "Develop a strategy to address the identified issue based on the probable cause."
+    ]
+  },
+  {
+    type: "matching",
+    question: "19. Match the type of knowledge base to the description.",
+    items: [
+      { key: "Industry-Specific Knowledge Bases", correct: "Offer official solutions and best practices from specific companies like Microsoft or Cisco." },
+      { key: "Internal Knowledge Bases", correct: "Document team-specific findings and solutions for recurring issues." },
+      { key: "General Frameworks (e.g., ITIL, ITSM)", correct: "Provide troubleshooting guidance and frameworks applicable across industries." }
+    ],
+    options: [
+      "Offer official solutions and best practices from specific companies like Microsoft or Cisco.",
+      "Document team-specific findings and solutions for recurring issues.",
+      "Provide troubleshooting guidance and frameworks applicable across industries."
+    ]
+  },
+  {
+    type: "mc",
+    question: "20. What is one of the benefits of using Windows Remote Assistance?",
+    options: [
+      "The user does not have to be present while the technician provides remote assistance.",
+      "It is simple and secure, with built-in functionality in Windows.",
+      "It can be used to support multiple devices running different operating systems.",
+      "It is only available on Windows Enterprise versions to support enterprise IT operation."
+    ],
+    correct: 1
+  }
+];
+
+let currentIdx = 0;
+let userAnswers = {};
+
+function initQuiz() {
+  const container = document.getElementById("questionsContainer");
+  container.innerHTML = "";
+
+  quizData.forEach((q, idx) => {
+    const card = document.createElement("div");
+    card.className = `question-card ${idx === 0 ? 'active' : ''}`;
+    card.id = `q-${idx}`;
+
+    let html = `<div class="question-title">${q.question}</div>`;
+
+    if (q.type === "mc") {
+      html += `<div class="options-container">`;
+      q.options.forEach((opt, oIdx) => {
+        html += `
+          <button class="option-btn" onclick="selectMC(${idx}, ${oIdx})">
+            <span>${String.fromCharCode(65 + oIdx)})</span>
+            <span>${opt}</span>
+          </button>
+        `;
+      });
+      html += `</div>`;
+    } else if (q.type === "matching") {
+      html += `<div class="matching-group">`;
+      // Shuffle options for matching dropdowns
+      const shuffled = [...q.options].sort(() => Math.random() - 0.5);
+      q.items.forEach((item, iIdx) => {
+        html += `
+          <div class="matching-row">
+            <span class="matching-label">${item.key}:</span>
+            <select class="matching-select" onchange="selectMatch(${idx}, ${iIdx}, this.value)">
+              <option value="">-- Vyber správnu odpoveď --</option>
+              ${shuffled.map(opt => `<option value="${escapeHtml(opt)}">${opt}</option>`).join('')}
+            </select>
+          </div>
+        `;
+      });
+      html += `</div>`;
+    }
+
+    card.innerHTML = html;
+    container.appendChild(card);
+  });
+
+  updateUI();
+}
+
+function escapeHtml(str) {
+  return str.replace(/"/g, '&quot;');
+}
+
+function selectMC(qIdx, optionIdx) {
+  userAnswers[qIdx] = optionIdx;
+  const card = document.getElementById(`q-${qIdx}`);
+  const btns = card.querySelectorAll(".option-btn");
+  btns.forEach((btn, i) => {
+    if (i === optionIdx) btn.classList.add("selected");
+    else btn.classList.remove("selected");
+  });
+}
+
+function selectMatch(qIdx, itemIdx, val) {
+  if (!userAnswers[qIdx]) userAnswers[qIdx] = {};
+  userAnswers[qIdx][itemIdx] = val;
+}
+
+function navigate(direction) {
+  const prevCard = document.getElementById(`q-${currentIdx}`);
+  prevCard.classList.remove("active");
+
+  currentIdx += direction;
+
+  if (currentIdx >= quizData.length) {
+    showResults();
+    return;
+  }
+
+  const nextCard = document.getElementById(`q-${currentIdx}`);
+  nextCard.classList.add("active");
+
+  updateUI();
+}
+
+function updateUI() {
+  document.getElementById("questionCounter").innerText = `Otázka ${currentIdx + 1} z ${quizData.length}`;
+  const pct = ((currentIdx + 1) / quizData.length) * 100;
+  document.getElementById("progressFill").style.width = `${pct}%`;
+
+  document.getElementById("prevBtn").style.visibility = currentIdx === 0 ? "hidden" : "visible";
+  document.getElementById("nextBtn").innerText = currentIdx === quizData.length - 1 ? "Dokončiť" : "Ďalej";
+}
+
+function showResults() {
+  document.getElementById("quizHeader").style.display = "none";
+  document.getElementById("questionsContainer").style.display = "none";
+  document.getElementById("quizControls").style.display = "none";
+  document.getElementById("resultsScreen").style.display = "block";
+
+  let score = 0;
+  const reviewList = document.getElementById("reviewList");
+  reviewList.innerHTML = "";
+
+  quizData.forEach((q, idx) => {
+    let isCorrect = false;
+    let userAnsText = "";
+    let correctAnsText = "";
+
+    if (q.type === "mc") {
+      const uAns = userAnswers[idx];
+      isCorrect = uAns === q.correct;
+      userAnsText = uAns !== undefined ? q.options[uAns] : "Neodpovedané";
+      correctAnsText = q.options[q.correct];
+    } else if (q.type === "matching") {
+      const uMatches = userAnswers[idx] || {};
+      let allCorrect = true;
+      let userDetails = [];
+      let correctDetails = [];
+
+      q.items.forEach((item, iIdx) => {
+        const uVal = uMatches[iIdx] || "Nezvolené";
+        userDetails.push(`${item.key} → ${uVal}`);
+        correctDetails.push(`${item.key} → ${item.correct}`);
+        if (uVal !== item.correct) {
+          allCorrect = false;
+        }
+      });
+
+      isCorrect = allCorrect;
+      userAnsText = userDetails.join("<br>");
+      correctAnsText = correctDetails.join("<br>");
+    }
+
+    if (isCorrect) score++;
+
+    const item = document.createElement("div");
+    item.className = `review-item ${isCorrect ? 'correct' : 'incorrect'}`;
+    item.innerHTML = `
+      <div class="review-q">${q.question}</div>
+      <div class="review-ans"><strong>Tvoja odpoveď:</strong><br>${userAnsText}</div>
+      ${!isCorrect ? `<div class="review-ans" style="margin-top:6px; color: var(--correct);"><strong>Správna odpoveď:</strong><br>${correctAnsText}</div>` : ''}
+    `;
+    reviewList.appendChild(item);
+  });
+
+  document.getElementById("scoreCircle").innerText = `${score}/${quizData.length}`;
+  const pct = Math.round((score / quizData.length) * 100);
+  document.getElementById("scoreMessage").innerText = `Úspešnosť: ${pct}% - ${pct >= 80 ? 'Výborný výsledok!' : 'Dobrý pokus, vyskúšaj to znova!'}`;
+}
+
+function restartQuiz() {
+  currentIdx = 0;
+  userAnswers = {};
+  document.getElementById("quizHeader").style.display = "block";
+  document.getElementById("questionsContainer").style.display = "block";
+  document.getElementById("quizControls").style.display = "flex";
+  document.getElementById("resultsScreen").style.display = "none";
+  initQuiz();
+}
+
+initQuiz();
+</script>
+
+</body>
+</html>
